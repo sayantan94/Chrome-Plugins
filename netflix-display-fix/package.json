@@ -1,6 +1,6 @@
 {
-  "name": "netflix-display-helper",
-  "version": "1.3.2",
+  "name": "netflix-display-fix",
+  "version": "1.3.3",
   "private": true,
   "description": "A browser-only compositor fix for black Netflix video on DisplayLink monitors.",
   "scripts": {
