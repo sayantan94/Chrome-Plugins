@@ -8,6 +8,10 @@ A generic Chrome extension for streaming video that turns black while audio cont
 
 The extension forces video through Chrome's page compositor instead of the direct hardware-overlay path that DisplayLink can present as black on macOS. It does not modify DRM, access video frames, or change Chrome's global graphics settings.
 
+## How it works at a glance
+
+![Three-step explanation of how DisplayLink Video Fix keeps streaming video inside Chrome's page compositor](./docs/how-displaylink-video-fix-works.png)
+
 ## Install
 
 1. Open `chrome://extensions`.
