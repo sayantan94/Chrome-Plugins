@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Generic player fixture</title>
+  </head>
+  <body>
+    <video id="standard-video"></video>
+    <div id="open-player"></div>
+    <div id="closed-player"></div>
+    <iframe id="nested-player"></iframe>
+    <pre id="results">waiting</pre>
+    <script>
+      const openVideo = document.createElement("video");
+      document.getElementById("open-player")
+        .attachShadow({ mode: "open" })
+        .append(openVideo);
+
+      const closedVideo = document.createElement("video");
+      document.getElementById("closed-player")
+        .attachShadow({ mode: "closed" })
+        .append(closedVideo);
+
+      const nestedFrame = document.getElementById("nested-player");
+      nestedFrame.src = "about:blank";
+      nestedFrame.addEventListener("load", () => {
+        const nestedVideo = nestedFrame.contentDocument.createElement("video");
+        nestedFrame.contentDocument.body.append(nestedVideo);
+
+        setTimeout(() => {
+          const videos = {
+            standard: document.getElementById("standard-video"),
+            openShadow: openVideo,
+            closedShadow: closedVideo,
+            nestedFrame: nestedVideo
+          };
+          const results = Object.fromEntries(Object.entries(videos).map(([name, video]) => [
+            name,
+            {
+              active: video.dataset.dvfCompositorFallback,
+              filter: video.style.filter,
+              opacity: video.style.opacity
+            }
+          ]));
+          document.getElementById("results").textContent = JSON.stringify(results);
+        }, 750);
+      }, { once: true });
+    </script>
+  </body>
+</html>

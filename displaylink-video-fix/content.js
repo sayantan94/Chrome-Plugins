@@ -1,4 +1,4 @@
-(function installNetflixDiagnostics() {
+(function installVideoDiagnostics() {
   "use strict";
 
   const MAX_EVENTS = 12;
@@ -34,7 +34,7 @@
     }
   }
 
-  function readNetflixError() {
+  function readPageError() {
     const selectors = [
       '[data-uia="error-message-container"]',
       '[data-uia="error-message"]',
@@ -140,9 +140,11 @@
   async function collectStatus() {
     const video = getPrimaryVideo();
     return {
-      drm: await probeWidevine(),
+      drm: video && video.mediaKeys
+        ? await probeWidevine()
+        : { available: null, reason: null },
       events: playerEvents.slice(-6),
-      netflixError: readNetflixError(),
+      pageError: readPageError(),
       page: {
         fullscreen: Boolean(document.fullscreenElement),
         hidden: document.hidden,
@@ -155,7 +157,7 @@
         pixelRatio: window.devicePixelRatio,
         width: window.screen.width
       },
-      compositorFallback: Boolean(video && video.dataset.ndhCompositorFallback === "active"),
+      compositorFallback: Boolean(video && video.dataset.dvfCompositorFallback === "active"),
       video: describeVideo(video)
     };
   }

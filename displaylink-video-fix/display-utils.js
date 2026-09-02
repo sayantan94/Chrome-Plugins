@@ -82,7 +82,7 @@
     normalizeRect
   };
 
-  root.NetflixDisplayUtils = api;
+  root.DisplayFixUtils = api;
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;

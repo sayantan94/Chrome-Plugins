@@ -1,18 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
-  <title id="title">Netflix Display Helper</title>
+  <title id="title">DisplayLink Video Fix</title>
   <defs>
     <linearGradient id="background" x1="18" y1="8" x2="110" y2="120" gradientUnits="userSpaceOnUse">
       <stop stop-color="#242424"/>
       <stop offset="1" stop-color="#070707"/>
     </linearGradient>
-    <linearGradient id="ribbon" x1="42" y1="29" x2="88" y2="99" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#ff2430"/>
-      <stop offset="1" stop-color="#b20710"/>
+    <linearGradient id="play" x1="43" y1="35" x2="91" y2="78" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8da2ff"/>
+      <stop offset="1" stop-color="#6757e8"/>
     </linearGradient>
   </defs>
   <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#background)"/>
   <rect x="17" y="21" width="94" height="70" rx="10" fill="#111" stroke="#555" stroke-width="5"/>
-  <path d="M45 35h13l25 39V35h14v43H84L59 40v38H45V35Z" fill="url(#ribbon)"/>
+  <path d="M51 34 91 56 51 79Z" fill="url(#play)"/>
   <path d="M49 107h30M64 91v16" fill="none" stroke="#d6d6d2" stroke-linecap="round" stroke-width="6"/>
   <circle cx="101" cy="31" r="8" fill="#5bd88b" stroke="#111" stroke-width="4"/>
 </svg>

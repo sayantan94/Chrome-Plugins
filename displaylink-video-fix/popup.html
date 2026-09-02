@@ -3,16 +3,16 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Netflix Display Helper</title>
+    <title>DisplayLink Video Fix</title>
     <link rel="stylesheet" href="popup.css">
   </head>
   <body>
     <main>
       <header class="masthead">
-        <div class="mark" aria-hidden="true">N</div>
+        <div class="mark" aria-hidden="true">▶</div>
         <div>
           <p class="eyebrow">DISPLAY FIX</p>
-          <h1>Netflix Display Fix</h1>
+          <h1>DisplayLink Video Fix</h1>
         </div>
       </header>
 
@@ -55,15 +55,11 @@
           <span>Move &amp; retry</span>
           <span aria-hidden="true">→</span>
         </button>
-        <p class="action-note">Moves Chrome here and reloads Netflix.</p>
+        <p class="action-note">Moves Chrome here and reloads the video.</p>
       </section>
 
-      <section id="not-netflix" class="section empty-state" hidden>
-        <p>Open a Netflix video first.</p>
-        <button id="open-title-button" class="primary-button" type="button">
-          <span>Open Netflix title</span>
-          <span aria-hidden="true">→</span>
-        </button>
+      <section id="unsupported-page" class="section empty-state" hidden>
+        <p>Open a video website first.</p>
       </section>
 
       <section class="section fixes">
@@ -77,11 +73,11 @@
           <button id="protected-content-button" type="button">Content settings</button>
           <button id="update-button" type="button">Update Chrome</button>
         </div>
-        <a class="help-link" href="https://help.netflix.com/en/node/11634" target="_blank" rel="noreferrer">Netflix help ↗</a>
+        <a class="help-link" href="https://support.displaylink.com/knowledgebase/articles/830301-content-protected-video-does-not-play-on-mac-while" target="_blank" rel="noreferrer">Why this happens ↗</a>
       </section>
 
       <footer>
-        Netflix only. No account access.
+        Tested: Netflix + Prime Video.
       </footer>
     </main>
 

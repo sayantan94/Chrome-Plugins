@@ -8,8 +8,7 @@ const elements = {
   displaylinkWarning: document.getElementById("displaylink-warning"),
   drmValue: document.getElementById("drm-value"),
   moveButton: document.getElementById("move-button"),
-  notNetflix: document.getElementById("not-netflix"),
-  openTitleButton: document.getElementById("open-title-button"),
+  unsupportedPage: document.getElementById("unsupported-page"),
   protectedContentButton: document.getElementById("protected-content-button"),
   reloadButton: document.getElementById("reload-button"),
   statusDetail: document.getElementById("status-detail"),
@@ -22,10 +21,10 @@ const elements = {
 let activeTab = null;
 let selectedDisplayId = null;
 
-function isNetflixWatchUrl(value) {
+function isWebUrl(value) {
   try {
     const url = new URL(value);
-    return url.origin === "https://www.netflix.com" && url.pathname.startsWith("/watch/");
+    return url.protocol === "http:" || url.protocol === "https:";
   } catch {
     return false;
   }
@@ -57,7 +56,7 @@ function renderDisplays(displays, browserWindow, preferredDisplayId) {
   elements.displayCount.textContent = `${displays.length} connected`;
   elements.displaylinkWarning.hidden = displays.length < 3;
 
-  const currentDisplay = NetflixDisplayUtils.findBestDisplay(browserWindow, displays);
+  const currentDisplay = DisplayFixUtils.findBestDisplay(browserWindow, displays);
   const connectedPreferred = displays.find(
     (display) => String(display.id) === String(preferredDisplayId)
   );
@@ -82,7 +81,7 @@ function renderDisplays(displays, browserWindow, preferredDisplayId) {
 
     const name = document.createElement("span");
     name.className = "display-name";
-    name.textContent = NetflixDisplayUtils.labelDisplay(display, index);
+    name.textContent = DisplayFixUtils.labelDisplay(display, index);
 
     const meta = document.createElement("span");
     meta.className = "display-meta";
@@ -107,18 +106,20 @@ function summarizePlayer(response) {
     elements.videoValue.textContent = "Not found";
     setStatus(
       "warning",
-      "Netflix is open",
+      "Video page is open",
       "Player still loading."
     );
     return;
   }
 
-  const { compositorFallback, drm, netflixError, video } = response.status;
-  elements.drmValue.textContent = drm && drm.available ? "Available" : "Unavailable";
+  const { compositorFallback, drm, pageError, video } = response.status;
+  elements.drmValue.textContent = drm && drm.available === true
+    ? "Available"
+    : drm && drm.available === false ? "Unavailable" : "Not used";
 
-  if (netflixError) {
+  if (pageError) {
     elements.videoValue.textContent = "Blocked";
-    setStatus("error", "Netflix error", netflixError);
+    setStatus("error", "Playback error", pageError);
     return;
   }
 
@@ -132,7 +133,7 @@ function summarizePlayer(response) {
     return;
   }
 
-  if (!drm || !drm.available) {
+  if (video && video.hasMediaKeys && (!drm || drm.available === false)) {
     elements.videoValue.textContent = video ? "Detected" : "Not found";
     setStatus(
       "error",
@@ -182,13 +183,13 @@ async function initialize() {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
   activeTab = tabs[0] || null;
 
-  if (!activeTab || !isNetflixWatchUrl(activeTab.url)) {
+  if (!activeTab || !isWebUrl(activeTab.url)) {
     elements.displaySection.hidden = true;
-    elements.notNetflix.hidden = false;
+    elements.unsupportedPage.hidden = false;
     elements.reloadButton.disabled = true;
     elements.drmValue.textContent = "—";
     elements.videoValue.textContent = "—";
-    setStatus("warning", "Open a Netflix video", "This tab is not a Netflix watch page.");
+    setStatus("warning", "Open a video page", "This tab cannot be modified.");
     return;
   }
 
@@ -199,7 +200,7 @@ async function initialize() {
     chrome.tabs.sendMessage(activeTab.id, { type: "GET_PLAYER_STATUS" }).catch(() => null)
   ]);
 
-  elements.notNetflix.hidden = true;
+  elements.unsupportedPage.hidden = true;
   elements.displaySection.hidden = false;
   renderDisplays(displays, browserWindow, stored.preferredDisplayId);
   summarizePlayer(playerResponse);
@@ -212,7 +213,7 @@ elements.moveButton.addEventListener("click", async () => {
 
   elements.moveButton.disabled = true;
   elements.moveButton.querySelector("span").textContent = "Moving Chrome…";
-  setStatus("checking", "Moving Chrome…", "Reloading Netflix.");
+  setStatus("checking", "Moving Chrome…", "Reloading video.");
 
   try {
     await sendRuntimeMessage({
@@ -239,18 +240,7 @@ elements.reloadButton.addEventListener("click", async () => {
     window.close();
   } catch (error) {
     elements.reloadButton.disabled = false;
-    setStatus("error", "Could not reload Netflix", error.message);
-  }
-});
-
-elements.openTitleButton.addEventListener("click", async () => {
-  elements.openTitleButton.disabled = true;
-  try {
-    await sendRuntimeMessage({ type: "OPEN_NETFLIX_TITLE" });
-    window.close();
-  } catch (error) {
-    elements.openTitleButton.disabled = false;
-    setStatus("error", "Could not open Netflix", error.message);
+    setStatus("error", "Could not reload video", error.message);
   }
 });
 
@@ -282,7 +272,7 @@ elements.browserFixButton.addEventListener("click", async () => {
     await sendRuntimeMessage({ type: "RELOAD_PLAYER", tabId: activeTab.id });
     window.close();
   } catch (error) {
-    setStatus("error", "Could not reload Netflix", error.message);
+    setStatus("error", "Could not reload video", error.message);
   }
 });
 
