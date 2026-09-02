@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Netflix Display Helper</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main>
+      <header class="masthead">
+        <div class="mark" aria-hidden="true">N</div>
+        <div>
+          <p class="eyebrow">DISPLAY FIX</p>
+          <h1>Netflix Display Fix</h1>
+        </div>
+      </header>
+
+      <section class="status-card" aria-live="polite">
+        <div class="status-line">
+          <span id="status-dot" class="status-dot status-dot--checking"></span>
+          <div>
+            <p id="status-title" class="status-title">Checking…</p>
+            <p id="status-detail" class="status-detail">Finding the player.</p>
+          </div>
+        </div>
+        <dl class="diagnostics">
+          <div>
+            <dt>Widevine</dt>
+            <dd id="drm-value">Checking</dd>
+          </div>
+          <div>
+            <dt>Video</dt>
+            <dd id="video-value">Checking</dd>
+          </div>
+          <div>
+            <dt>HDCP</dt>
+            <dd>Not exposed by Chrome</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section id="display-section" class="section" hidden>
+        <div class="section-heading">
+          <h2>Choose a display</h2>
+          <span id="display-count" class="count"></span>
+        </div>
+        <div id="display-list" class="display-list" role="radiogroup" aria-label="Connected displays"></div>
+        <aside id="displaylink-warning" class="displaylink-warning" hidden>
+          <strong>Browser fix active</strong>
+          <span>Chrome is compositing video for DisplayLink.</span>
+          <button id="browser-fix-button" type="button">Reload fix</button>
+        </aside>
+        <button id="move-button" class="primary-button" type="button">
+          <span>Move &amp; retry</span>
+          <span aria-hidden="true">→</span>
+        </button>
+        <p class="action-note">Moves Chrome here and reloads Netflix.</p>
+      </section>
+
+      <section id="not-netflix" class="section empty-state" hidden>
+        <p>Open a Netflix video first.</p>
+        <button id="open-title-button" class="primary-button" type="button">
+          <span>Open Netflix title</span>
+          <span aria-hidden="true">→</span>
+        </button>
+      </section>
+
+      <section class="section fixes">
+        <h2>Black screen?</h2>
+        <ol>
+          <li>Reload the browser fix.</li>
+          <li>Try a direct cable if DisplayLink still blocks video.</li>
+        </ol>
+        <div class="secondary-actions">
+          <button id="reload-button" type="button">Reload player</button>
+          <button id="protected-content-button" type="button">Content settings</button>
+          <button id="update-button" type="button">Update Chrome</button>
+        </div>
+        <a class="help-link" href="https://help.netflix.com/en/node/11634" target="_blank" rel="noreferrer">Netflix help ↗</a>
+      </section>
+
+      <footer>
+        Netflix only. No account access.
+      </footer>
+    </main>
+
+    <script src="display-utils.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>
