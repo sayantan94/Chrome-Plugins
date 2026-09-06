@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sticky Notes</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main>
+      <header class="top">
+        <div>
+          <h1>Sticky Notes</h1>
+          <p id="totals" class="totals">Loading…</p>
+        </div>
+        <button id="add-button" class="add" type="button" hidden>Add Note</button>
+      </header>
+
+      <p id="page-hint" class="hint" hidden></p>
+
+      <div class="filters">
+        <label class="select-wrap">
+          <span class="visually-hidden">Show notes from</span>
+          <select id="where-select" aria-label="Show notes from"></select>
+        </label>
+        <label class="search-wrap">
+          <span class="visually-hidden">Search notes</span>
+          <input id="search" type="search" placeholder="Search notes" autocomplete="off">
+        </label>
+      </div>
+
+      <ul id="note-list" class="notes" aria-live="polite"></ul>
+
+      <div id="undo-bar" class="undo" role="status" hidden>
+        <span id="undo-text">Note Deleted</span>
+        <button id="undo-button" type="button">Undo</button>
+      </div>
+
+      <div id="confirm" class="confirm" role="alertdialog" aria-labelledby="confirm-title" hidden>
+        <p id="confirm-title" class="confirm-title">Delete 4 Notes?</p>
+        <p class="confirm-body">This can’t be undone.</p>
+        <div class="confirm-actions">
+          <button id="confirm-cancel" type="button">Cancel</button>
+          <button id="confirm-delete" class="destructive" type="button">Delete</button>
+        </div>
+      </div>
+
+      <div id="empty" class="empty" hidden>
+        <p id="empty-title">No notes yet.</p>
+        <p id="empty-body" class="empty-body"></p>
+      </div>
+
+      <footer class="foot">
+        <span id="foot-count" title="Keyboard shortcut for Add Note"></span>
+        <button id="delete-shown" class="link" type="button" hidden>Delete Notes…</button>
+      </footer>
+    </main>
+
+    <script src="notes-store.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

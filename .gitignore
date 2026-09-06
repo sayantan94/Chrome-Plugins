@@ -3,3 +3,5 @@ node_modules/
 *.crx
 *.pem
 *.zip
+tmp/
+.context/
