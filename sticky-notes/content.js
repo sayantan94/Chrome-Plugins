@@ -2,9 +2,9 @@
  * Renders sticky notes for the current page inside a Shadow DOM overlay,
  * persists every change to chrome.storage.local, and keeps tabs in sync.
  *
- * A page reads two storage keys: its own ("notes:<page>") and its site's
- * ("site:<origin>"). Each note carries a `scope` that says which one it
- * belongs to; changing the scope moves it between the keys.
+ * A page reads three storage keys: its exact URL ("notes:<page>"), its path
+ * regardless of query params ("path:<page>"), and its site ("site:<origin>").
+ * Each note carries a `scope`; changing it moves the note between those keys.
  */
 (function stickyNotesContent() {
   "use strict";
@@ -22,7 +22,7 @@
   const HOST_ID = "sticky-notes-host";
   const Z_TOP = 2147483646;
 
-  let currentKeys = null; // { page, site }
+  let currentKeys = null; // { page, path, site }
   let notes = [];
   const lastWritten = new Map(); // storage key -> JSON we last wrote
   let zCounter = 1;
@@ -380,7 +380,7 @@ ${colorRules}
   }
 
   async function changeScope(note, scope) {
-    if (note.scope === scope || !currentKeys || !currentKeys.site) return;
+    if (note.scope === scope || !currentKeys || !store.keyForScope(currentKeys, scope)) return;
     const from = keyFor(note);
     note.scope = scope;
     const keysAtStart = currentKeys;
@@ -518,7 +518,12 @@ ${colorRules}
     scope.className = "scope";
     scope.title = "Show this note on";
     scope.setAttribute("aria-label", "Show this note on");
-    for (const [value, label, title] of [["page", "This Page", "Shows only on this page"], ["site", `All of ${siteLabel()}`, `Shows on every page of ${siteLabel()}`]]) {
+    const scopeOptions = [
+      ["page", "This Exact View", "Includes URL options such as filters and date ranges"],
+      ["path", "This Page, Any Filters", "Ignores everything after ? in the URL"],
+      ["site", `All of ${siteLabel()}`, `Shows on every page of ${siteLabel()}`]
+    ];
+    for (const [value, label, title] of scopeOptions) {
       const option = document.createElement("option");
       option.value = value;
       option.textContent = label;
@@ -839,24 +844,23 @@ ${colorRules}
 
   async function loadPage() {
     const keys = store.keysFor(location.href);
-    const same = keys && currentKeys && keys.page === currentKeys.page && keys.site === currentKeys.site;
+    const same = keys && currentKeys && store.SCOPES.every((scope) => keys[scope] === currentKeys[scope]);
     if (same || (!keys && !currentKeys)) return;
     flushSaves();
     currentKeys = keys;
     notes = [];
     render();
     if (!keys) return;
-    const [pageNotes, siteNotes] = await Promise.all([storageGet(keys.page), storageGet(keys.site)]);
+    const scopedNotes = await Promise.all(store.SCOPES.map((scope) => storageGet(keys[scope])));
     if (keys !== currentKeys) return;
-    notes = mergeScoped(pageNotes, siteNotes);
+    notes = mergeScoped(scopedNotes);
     render();
   }
 
-  function mergeScoped(pageNotes, siteNotes) {
-    return [
-      ...pageNotes.map((note) => ({ ...note, scope: "page" })),
-      ...siteNotes.map((note) => ({ ...note, scope: "site" }))
-    ];
+  function mergeScoped(scopedNotes) {
+    return store.SCOPES.flatMap((scope, index) =>
+      scopedNotes[index].map((note) => ({ ...note, scope }))
+    );
   }
 
   function onStorageChanged(changes, area) {

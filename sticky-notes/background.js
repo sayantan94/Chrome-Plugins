@@ -36,10 +36,11 @@ chrome.commands.onCommand.addListener(async (command) => {
 // ------------------------------------------------------------------ badge
 
 async function countFor(url) {
-  const key = store.storageKey(url || "");
-  if (!key) return 0;
-  const result = await chrome.storage.local.get(key);
-  return store.normalizeNotes(result[key]).length;
+  const keys = store.keysFor(url || "");
+  if (!keys) return 0;
+  const visibleKeys = Object.values(keys);
+  const result = await chrome.storage.local.get(visibleKeys);
+  return visibleKeys.reduce((count, key) => count + store.normalizeNotes(result[key]).length, 0);
 }
 
 async function refreshBadge(tabId, url) {
@@ -58,14 +59,14 @@ chrome.tabs.onActivated.addListener(async ({ tabId }) => {
 
 chrome.storage.onChanged.addListener(async (changes, area) => {
   if (area !== "local") return;
-  const changedUrls = Object.keys(changes)
-    .filter(store.isStorageKey)
-    .map(store.urlFromStorageKey);
-  if (changedUrls.length === 0) return;
+  const changedKeys = new Set(Object.keys(changes).filter(store.isNoteKey));
+  if (changedKeys.size === 0) return;
   const tabs = await chrome.tabs.query({});
   for (const tab of tabs) {
     if (tab.id == null || !tab.url) continue;
-    const tabPage = store.pageKey(tab.url);
-    if (tabPage && changedUrls.includes(tabPage)) refreshBadge(tab.id, tab.url);
+    const keys = store.keysFor(tab.url);
+    if (keys && Object.values(keys).some((key) => changedKeys.has(key))) {
+      refreshBadge(tab.id, tab.url);
+    }
   }
 });

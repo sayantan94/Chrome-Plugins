@@ -26,7 +26,7 @@ The note works like a macOS Stickies window:
 - Drag the darker bar on top to move it. Notes are anchored to the page, so they scroll with the content.
 - Drag the grip in the bottom-right corner to resize it.
 - The bar has a trash button on the left, and a colour menu and collapse button on the right. Deleting shows a five-second **Undo**.
-- The pull-down in the footer chooses where the note shows: **This Page**, or **All of** that site. A site is the full host, so `mail.google.com` and `docs.google.com` are separate sites.
+- New notes default to **This Page, Any Filters** (same path regardless of the query string). The footer pull-down can instead use **This Exact View** (including meaningful query options) or **All of** that site. A site is the full host, so `mail.google.com` and `docs.google.com` are separate sites.
 - A brief **Saved** appears after every change. Press **Escape** to leave the note.
 
 The toolbar badge shows how many notes are on the current page. The popup lists every note you have, anywhere. Use the pop-up button to show notes visible on this page, all notes on this site, all notes, or any single site. Search filters by text, host, or path. Click a note to scroll to it, or to open its page if it lives elsewhere. Deleting one note offers **Undo**. Deleting the whole list asks first. The popup follows your system's light or dark appearance.
@@ -34,9 +34,9 @@ The toolbar badge shows how many notes are on the current page. The popup lists 
 ## How it works
 
 - `content.js` draws the notes inside a Shadow DOM overlay so page styles and note styles never touch. Notes are stored with document coordinates, and every edit, move, resize, colour change and collapse is written back within a third of a second.
-- `notes-store.js` is the shared, dependency-free logic: it turns a URL into a stable page key (hash and tracking params such as `utm_*` are ignored, so `page#section` and `page?utm_source=x` share notes) and a site key (the origin), and validates everything read from storage.
+- `notes-store.js` is the shared, dependency-free logic: it turns a URL into stable exact-view, path-only, and site keys. Hashes and tracking params such as `utm_*` are ignored for exact views; path-only notes deliberately ignore the entire query string.
 - `background.js` owns the context menu, the keyboard shortcut and the badge.
-- Storage is `chrome.storage.local`: one key per page (`notes:<page>`) and one per site (`site:<origin>`). A page renders both. Writes are read-modify-write and tabs listen for changes, so two tabs on the same page stay in sync. Single-page apps are handled by watching the URL.
+- Storage is `chrome.storage.local`: one key per exact view (`notes:<url>`), one per path (`path:<origin-and-path>`), and one per site (`site:<origin>`). A page renders all three. Writes are read-modify-write and tabs listen for changes, so two tabs on the same page stay in sync. Single-page apps are handled by watching the URL.
 
 ## Privacy
 

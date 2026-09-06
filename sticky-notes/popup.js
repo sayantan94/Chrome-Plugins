@@ -24,7 +24,7 @@
   const TRASH = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3.2h8M4.6 3.2V2h2.8v1.2M3 3.2l.6 6.6a.8.8 0 0 0 .8.7h3.2a.8.8 0 0 0 .8-.7l.6-6.6M5 5.2v3.3M7 5.2v3.3"/></svg>';
 
   let tab = null;
-  let keys = null; // { page, site } for the active tab, or null
+  let keys = null; // { page, path, site } for the active tab, or null
   let entries = []; // every note in storage, newest first
   let shown = [];
   let undoState = null; // { entries: [...], timer }
@@ -56,7 +56,10 @@
 
   function entriesFor(filter) {
     if (filter === FILTER_ALL) return entries;
-    if (filter === FILTER_PAGE) return keys ? entries.filter((e) => e.key === keys.page || e.key === keys.site) : [];
+    if (filter === FILTER_PAGE) {
+      const visibleKeys = new Set(Object.values(keys || {}));
+      return keys ? entries.filter((e) => visibleKeys.has(e.key)) : [];
+    }
     if (filter === FILTER_SITE) return keys ? entries.filter((e) => e.host === currentHost()) : [];
     if (filter.startsWith(HOST_PREFIX)) {
       const host = filter.slice(HOST_PREFIX.length);
@@ -184,6 +187,12 @@
       path.textContent = entry.path || "/";
       path.title = entry.url;
       meta.appendChild(path);
+      if (entry.scope === "path") {
+        const tag = document.createElement("span");
+        tag.className = "site-tag";
+        tag.textContent = "any filters";
+        meta.appendChild(tag);
+      }
     }
     const when = document.createElement("span");
     when.className = "when";
@@ -206,7 +215,7 @@
   }
 
   function isOnCurrentPage(entry) {
-    return Boolean(keys && (entry.key === keys.page || entry.key === keys.site));
+    return Boolean(keys && Object.values(keys).includes(entry.key));
   }
 
   async function openEntry(entry) {

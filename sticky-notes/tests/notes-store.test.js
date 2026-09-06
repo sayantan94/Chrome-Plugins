@@ -4,9 +4,12 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
   STORAGE_PREFIX,
+  PATH_PREFIX,
   COLOR_NAMES,
   pageKey,
   storageKey,
+  pathPageKey,
+  pathStorageKey,
   urlFromStorageKey,
   normalizeNote,
   normalizeNotes,
@@ -44,6 +47,26 @@ test("storage key round-trips through the prefix", () => {
   assert.equal(key, `${STORAGE_PREFIX}https://example.com/a?b=1`);
   assert.equal(urlFromStorageKey(key), "https://example.com/a?b=1");
   assert.equal(storageKey("about:blank"), null);
+});
+
+test("path scope ignores query options while keeping the page path", () => {
+  const finance = "https://www.google.com/finance/beta/quote/SPY:NYSEARCA?window=5D";
+  assert.equal(
+    pathPageKey(finance),
+    "https://www.google.com/finance/beta/quote/SPY:NYSEARCA"
+  );
+  assert.equal(
+    pathStorageKey(finance),
+    `${PATH_PREFIX}https://www.google.com/finance/beta/quote/SPY:NYSEARCA`
+  );
+  assert.equal(
+    pathStorageKey(finance),
+    pathStorageKey("https://www.google.com/finance/beta/quote/SPY:NYSEARCA?window=1M")
+  );
+  assert.notEqual(
+    pathStorageKey(finance),
+    pathStorageKey("https://www.google.com/finance/beta/quote/QQQ:NASDAQ?window=5D")
+  );
 });
 
 test("creates a note with sane defaults", () => {
@@ -150,15 +173,17 @@ test("site key is the full host, so subdomains are separate sites", () => {
   assert.equal(siteOf("chrome://extensions"), null);
 });
 
-test("keysFor gives both the page key and its site key", () => {
+test("keysFor gives exact URL, path, and site keys", () => {
   const keys = keysFor("https://app.example.com/board/1?x=1#top");
   assert.deepEqual(keys, {
     page: `${STORAGE_PREFIX}https://app.example.com/board/1?x=1`,
+    path: `${PATH_PREFIX}https://app.example.com/board/1`,
     site: `${SITE_PREFIX}https://app.example.com`
   });
   assert.equal(keyForScope(keys, "site"), keys.site);
+  assert.equal(keyForScope(keys, "path"), keys.path);
   assert.equal(keyForScope(keys, "page"), keys.page);
-  assert.equal(keyForScope(keys, "bogus"), keys.page);
+  assert.equal(keyForScope(keys, "bogus"), keys.path);
   assert.equal(keysFor("about:blank"), null);
 });
 
@@ -177,25 +202,35 @@ test("parseStorageKey explains where a key's notes live", () => {
     host: "a.b.com",
     path: ""
   });
+  assert.deepEqual(parseStorageKey(`${PATH_PREFIX}https://a.b.com/path`), {
+    key: `${PATH_PREFIX}https://a.b.com/path`,
+    scope: "path",
+    url: "https://a.b.com/path",
+    host: "a.b.com",
+    path: "/path"
+  });
   assert.equal(parseStorageKey("settings"), null);
 });
 
-test("note scope defaults to page and only accepts known scopes", () => {
-  assert.equal(normalizeNote({}).scope, "page");
+test("note scope defaults to the page path and only accepts known scopes", () => {
+  assert.equal(normalizeNote({}).scope, "path");
+  assert.equal(normalizeNote({ scope: "path" }).scope, "path");
   assert.equal(normalizeNote({ scope: "site" }).scope, "site");
-  assert.equal(normalizeNote({ scope: "global" }).scope, "page");
+  assert.equal(normalizeNote({ scope: "global" }).scope, "path");
 });
 
 test("listAllNotes flattens every key, tags scope from the key, newest first", () => {
   const entries = listAllNotes({
     [`${STORAGE_PREFIX}https://a.com/x`]: [createNote({ id: "1", updatedAt: 10, createdAt: 1 })],
     [`${SITE_PREFIX}https://b.com`]: [createNote({ id: "2", updatedAt: 50, createdAt: 1, scope: "page" })],
+    [`${PATH_PREFIX}https://c.com/report`]: [createNote({ id: "3", updatedAt: 30, createdAt: 1 })],
     junk: 1
   });
   assert.deepEqual(
     entries.map((e) => [e.note.id, e.scope, e.note.scope, e.host, e.url]),
     [
       ["2", "site", "site", "b.com", "https://b.com/"],
+      ["3", "path", "path", "c.com", "https://c.com/report"],
       ["1", "page", "page", "a.com", "https://a.com/x"]
     ]
   );

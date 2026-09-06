@@ -6,10 +6,11 @@
 (function attachNotesStore(root) {
   "use strict";
 
-  const STORAGE_PREFIX = "notes:"; // one page
+  const STORAGE_PREFIX = "notes:"; // one exact URL (minus hash and tracking params)
+  const PATH_PREFIX = "path:"; // one origin + pathname, regardless of query params
   const SITE_PREFIX = "site:"; // every page on one host (subdomains are distinct)
-  const SCOPES = ["page", "site"];
-  const DEFAULT_SCOPE = "page";
+  const SCOPES = ["page", "path", "site"];
+  const DEFAULT_SCOPE = "path";
   const NOTE_DEFAULT_WIDTH = 250;
   const NOTE_DEFAULT_HEIGHT = 170;
   const NOTE_MIN_WIDTH = 140;
@@ -63,6 +64,19 @@
     return key ? STORAGE_PREFIX + key : null;
   }
 
+  /** Stable identity for a page path, deliberately ignoring its query and hash. */
+  function pathPageKey(url) {
+    const key = pageKey(url);
+    if (!key) return null;
+    const parsed = new URL(key);
+    return `${parsed.protocol}//${parsed.host}${parsed.pathname}`;
+  }
+
+  function pathStorageKey(url) {
+    const key = pathPageKey(url);
+    return key ? PATH_PREFIX + key : null;
+  }
+
   function isStorageKey(key) {
     return typeof key === "string" && key.startsWith(STORAGE_PREFIX);
   }
@@ -70,8 +84,13 @@
   function urlFromStorageKey(key) {
     if (typeof key !== "string") return null;
     if (key.startsWith(STORAGE_PREFIX)) return key.slice(STORAGE_PREFIX.length);
+    if (key.startsWith(PATH_PREFIX)) return key.slice(PATH_PREFIX.length);
     if (key.startsWith(SITE_PREFIX)) return `${key.slice(SITE_PREFIX.length)}/`;
     return null;
+  }
+
+  function isPathKey(key) {
+    return typeof key === "string" && key.startsWith(PATH_PREFIX);
   }
 
   /** Origin of the page, lowercased. mail.example.com and example.com differ. */
@@ -96,18 +115,21 @@
   }
 
   function isNoteKey(key) {
-    return isStorageKey(key) || isSiteKey(key);
+    return isStorageKey(key) || isPathKey(key) || isSiteKey(key);
   }
 
-  /** Both keys a page reads from: its own notes and its site's notes. */
+  /** All keys a page reads from: exact URL, path regardless of query, and site. */
   function keysFor(url) {
     const page = storageKey(url);
     if (!page) return null;
-    return { page, site: siteStorageKey(url) };
+    return { page, path: pathStorageKey(url), site: siteStorageKey(url) };
   }
 
   function keyForScope(keys, scope) {
-    return scope === "site" ? keys.site : keys.page;
+    if (scope === "site") return keys.site;
+    if (scope === "path") return keys.path;
+    if (scope === "page") return keys.page;
+    return keys[DEFAULT_SCOPE];
   }
 
   /** Describe a storage key: scope, the url to open, and the host to group by. */
@@ -115,6 +137,10 @@
     if (isStorageKey(key)) {
       const url = key.slice(STORAGE_PREFIX.length);
       return { key, scope: "page", url, host: hostOf(url), path: pathOf(url) };
+    }
+    if (isPathKey(key)) {
+      const url = key.slice(PATH_PREFIX.length);
+      return { key, scope: "path", url, host: hostOf(url), path: pathOf(url) };
     }
     if (isSiteKey(key)) {
       const site = key.slice(SITE_PREFIX.length);
@@ -278,6 +304,7 @@
 
   const api = {
     STORAGE_PREFIX,
+    PATH_PREFIX,
     SITE_PREFIX,
     SCOPES,
     DEFAULT_SCOPE,
@@ -290,11 +317,14 @@
     NOTE_MIN_HEIGHT,
     pageKey,
     storageKey,
+    pathPageKey,
+    pathStorageKey,
     siteOf,
     siteStorageKey,
     keysFor,
     keyForScope,
     isStorageKey,
+    isPathKey,
     isSiteKey,
     isNoteKey,
     urlFromStorageKey,
